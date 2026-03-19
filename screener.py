@@ -9,12 +9,12 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # --- TELEGRAM AYARLARI ---
-TOKEN = os.environ.get("TELEGRAM_TOKEN")
-CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
+TOKEN = os.environ.get("8636859505:AAFGvfaT8JDMoDmwbUZNoJ0OA-NdToeB3Uk")
+CHAT_ID = os.environ.get("5886003690")
 
 def send_telegram_message(message):
-    url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
-    payload = {"chat_id": CHAT_ID, "text": message, "parse_mode": "Markdown"}
+    url = f"https://api.telegram.org/bot8636859505:AAFGvfaT8JDMoDmwbUZNoJ0OA-NdToeB3Uk/sendMessage"
+    payload = {"chat_id": 5886003690, "text": message, "parse_mode": "Markdown"}
     try:
         requests.post(url, json=payload)
     except Exception as e:
