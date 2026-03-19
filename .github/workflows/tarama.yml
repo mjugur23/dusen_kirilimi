@@ -1,0 +1,29 @@
+name: Düşen Kırılım Tarayıcı
+
+on:
+  schedule:
+    # Hafta içi (Pazartesi-Cuma) her gün Türkiye saatiyle 18:30'da çalışır (UTC 15:30)
+    - cron: '30 15 * * 1-5'
+  workflow_dispatch: # Manuel çalıştırma butonu ekler
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Kodu Al
+        uses: actions/checkout@v3
+        
+      - name: Python Kur
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          
+      - name: Gerekli Kütüphaneleri Yükle
+        run: |
+          pip install -r requirements.txt
+          
+      - name: Düşen Kırılım Taramasını Çalıştır
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python screener.py
