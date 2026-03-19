@@ -1,10 +1,7 @@
 name: Düşen Kırılım Tarayıcı
 
 on:
-  schedule:
-    # Hafta içi (Pazartesi-Cuma) her gün Türkiye saatiyle 18:30'da çalışır (UTC 15:30)
-    - cron: '30 15 * * 1-5'
-  workflow_dispatch: # Manuel çalıştırma butonu ekler
+  workflow_dispatch: # SADECE manuel çalıştırma butonunu aktif bıraktık (Saatli alarm silindi)
 
 jobs:
   scan:
