@@ -20,40 +20,118 @@ def send_telegram_message(message):
     except Exception as e:
         print(f"Telegram hatası: {e}")
 
-# --- DÜŞEN KIRILIM FORMÜLÜ ---
-def find_downtrend_breakout(df, lookback=90):
-    if df is None or len(df) < lookback + 5: return False, None
+İşte tam olarak aradığım dosya buydu! Eski, hatalı tepe bulan fonksiyonu çöpe atıp yerine yeni geliştirdiğimiz "İhlal Affetmeyen Akıllı Motoru" entegre ettim.
+
+Ayrıca GitHub Actions üzerinde çalışırken hata vermemesi için gerekli kütüphaneleri (yfinance, requests, os) ve senin kullandığın send_telegram_message fonksiyonunun standart, güvenli (Secrets üzerinden okuyan) halini de kodun içine gömdüm.
+
+GitHub'daki Python dosyanın (örn: main.py veya scanner.py) içindekileri tamamen silip şu kusursuzlaştırılmış ve Telegram'a hazır versiyonu yapıştırman yeterli:
+
+Python
+import os
+import requests
+import pandas as pd
+import numpy as np
+import yfinance as yf
+import warnings
+
+warnings.filterwarnings('ignore')
+
+# --- TELEGRAM SİNYAL GÖNDERİCİ ---
+def send_telegram_message(message):
+    """GitHub Secrets'tan token ve chat_id alarak Telegram'a mesaj atar."""
+    # GitHub Actions kullanırken bu bilgileri deşifre olmaması için Secrets'a eklemelisin!
+    bot_token = os.environ.get('TELEGRAM_BOT_TOKEN') 
+    chat_id = os.environ.get('TELEGRAM_CHAT_ID')
+    
+    if not bot_token or not chat_id:
+        print("Telegram Token veya Chat ID bulunamadı. Mesaj gönderilmedi.")
+        return
+        
+    send_text = f'https://api.telegram.org/bot{bot_token}/sendMessage?chat_id={chat_id}&parse_mode=Markdown&text={message}'
+    try:
+        requests.get(send_text)
+    except Exception as e:
+        print(f"Telegram mesajı gönderilirken hata oluştu: {e}")
+
+# --- YENİ VE AKILLI DÜŞEN KIRILIM MOTORU ---
+def find_downtrend_breakout(df, window=5, min_distance=10):
+    """
+    Gerçek (Macro) düşen trend kırılımlarını bulur. 
+    İhlal edilmiş sahte çizgileri kesinlikle eler.
+    """
+    if df is None or len(df) < 30:
+        return False, {}
+        
     high_col = 'High' if 'High' in df.columns else 'high'
     close_col = 'Close' if 'Close' in df.columns else 'close'
     
-    df_recent = df.tail(lookback).copy()
-    highs, closes = df_recent[high_col].values, df_recent[close_col].values
-    peaks = argrelextrema(highs, np.greater, order=5)[0]
+    highs = df[high_col].values
+    closes = df[close_col].values
+    dates = df.index
     
-    if len(peaks) < 2: return False, None
-    p1_idx, p2_idx = peaks[-2], peaks[-1]
-    p1_val, p2_val = highs[p1_idx], highs[p2_idx]
-    
-    if p2_val >= p1_val or (p2_idx - p1_idx) < 5: return False, None
-        
-    m = (p2_val - p1_val) / (p2_idx - p1_idx)
-    b = p1_val - m * p1_idx
-    last_idx, prev_idx = len(df_recent) - 1, len(df_recent) - 2
-    
-    trendline_today = m * last_idx + b
-    trendline_yesterday = m * prev_idx + b
-    
-    if closes[prev_idx] <= trendline_yesterday and closes[last_idx] > trendline_today:
-        if closes[last_idx] > (p1_val * 1.05): return False, None
-        tarih1, tarih2 = df_recent.index[p1_idx].strftime('%Y-%m-%d'), df_recent.index[p2_idx].strftime('%Y-%m-%d')
-        
-        details = {
-            "1. Tepe Tarihi": tarih1, "1. Tepe Fiyatı": round(p1_val, 2),
-            "2. Tepe Tarihi": tarih2, "2. Tepe Fiyatı": round(p2_val, 2),
-            "Kırılım Fiyatı": round(closes[last_idx], 2), "Direnç Sınırı": round(trendline_today, 2)
-        }
-        return True, details
-    return False, None
+    # 1. Gerçek Tepeleri (Pivot Highs) Bul
+    pivot_indices = []
+    for i in range(window, len(highs) - window):
+        if highs[i] == max(highs[i - window : i + window + 1]):
+            if not pivot_indices or i - pivot_indices[-1] >= 3:
+                pivot_indices.append(i)
+
+    if len(pivot_indices) < 2:
+        return False, {}
+
+    current_idx = len(highs) - 1
+    current_close = closes[current_idx]
+    prev_close = closes[current_idx - 1]
+
+    # 2. Tepeleri sondan başa doğru tara
+    for i in range(len(pivot_indices) - 2, -1, -1):
+        for j in range(len(pivot_indices) - 1, i, -1):
+            p1_idx = pivot_indices[i]
+            p2_idx = pivot_indices[j]
+
+            if p2_idx - p1_idx < min_distance:
+                continue
+
+            p1_high = highs[p1_idx]
+            p2_high = highs[p2_idx]
+
+            if p1_high <= p2_high:
+                continue
+
+            m = (p2_high - p1_high) / (p2_idx - p1_idx)
+            b = p1_high - m * p1_idx
+
+            # 3. İHLAL KONTROLÜ (Fiyat çizgiyi önceden kesmiş mi?)
+            ihlal_var = False
+            for k in range(p1_idx + 1, current_idx): 
+                cizgi_degeri = m * k + b
+                if highs[k] > cizgi_degeri: 
+                    ihlal_var = True
+                    break
+
+            if ihlal_var:
+                continue
+
+            # 4. KIRILIM KONTROLÜ
+            cizgi_dun = m * (current_idx - 1) + b
+            cizgi_bugun = m * current_idx + b
+
+            if prev_close <= cizgi_dun and current_close > cizgi_bugun:
+                # Kırılım bugünkü fiyatı, birinci tepenin fiyatını çoktan geçmişse bayat kırılımdır
+                if current_close > (p1_high * 1.05):
+                     continue
+
+                details = {
+                    "1. Tepe Tarihi": dates[p1_idx].strftime('%Y-%m-%d'),
+                    "1. Tepe Fiyatı": round(p1_high, 2),
+                    "2. Tepe Tarihi": dates[p2_idx].strftime('%Y-%m-%d'),
+                    "2. Tepe Fiyatı": round(p2_high, 2),
+                    "Kırılım Fiyatı": round(current_close, 2),
+                    "Direnç Sınırı": round(cizgi_bugun, 2)
+                }
+                return True, details
+
+    return False, {}
 
 def main():
     # Tarama yapılacak BIST100 hisseleri
@@ -95,8 +173,11 @@ def main():
     
     for ticker in TICKERS:
         try:
+            # yfinance'den veri çekerken 6mo yeterli (yaklaşık 125 iş günü)
             df = yf.download(f"{ticker}.IS", period="6mo", progress=False)
             if df.empty: continue
+            
+            # MultiIndex sorununu çöz
             if isinstance(df.columns, pd.MultiIndex):
                 df.columns = df.columns.get_level_values(0)
             
@@ -114,8 +195,9 @@ def main():
         send_telegram_message("🔔 *Günlük Düşen Kırılım Raporu* 🔔")
         for msg in bulunanlar:
             send_telegram_message(msg)
+        print(f"Tarama bitti, {len(bulunanlar)} adet hisse Telegram'a gönderildi.")
     else:
-        print("Bugün net bir düşen kırılımı bulunamadı.")
+        print("Bugün net ve kurallara uygun bir düşen kırılımı bulunamadı.")
 
 if __name__ == "__main__":
     main()
