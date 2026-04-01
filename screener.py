@@ -11,7 +11,7 @@ warnings.filterwarnings('ignore')
 # --- TELEGRAM AYARLARI ---
 TOKEN = os.environ.get("8625940807:AAE_bsrBsj7lojRv6Dhbq0uJjY_kaz7RwMo")
 CHAT_ID = os.environ.get("5886003690")
-MEMORY_FILE = "dusen_hafiza.json
+MEMORY_FILE = "dusen_hafiza.json"
 
 def send_telegram_message(message):
     url = f"https://api.telegram.org/bot8625940807:AAE_bsrBsj7lojRv6Dhbq0uJjY_kaz7RwMo/sendMessage"
