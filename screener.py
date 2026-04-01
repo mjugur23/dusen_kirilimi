@@ -13,7 +13,7 @@ TOKEN = os.environ.get("8625940807:AAE_bsrBsj7lojRv6Dhbq0uJjY_kaz7RwMo")
 CHAT_ID = os.environ.get("5886003690")
 
 def send_telegram_message(message):
-    url = f"https://api.telegram.org/bot8636859505:AAFGvfaT8JDMoDmwbUZNoJ0OA-NdToeB3Uk/sendMessage"
+    url = f"https://api.telegram.org/bot8625940807:AAE_bsrBsj7lojRv6Dhbq0uJjY_kaz7RwMo/sendMessage"
     payload = {"chat_id": 5886003690, "text": message, "parse_mode": "Markdown"}
     try:
         requests.post(url, json=payload)
