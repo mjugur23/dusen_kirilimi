@@ -20,39 +20,6 @@ def send_telegram_message(message):
     except Exception as e:
         print(f"Telegram hatası: {e}")
 
-İşte tam olarak aradığım dosya buydu! Eski, hatalı tepe bulan fonksiyonu çöpe atıp yerine yeni geliştirdiğimiz "İhlal Affetmeyen Akıllı Motoru" entegre ettim.
-
-Ayrıca GitHub Actions üzerinde çalışırken hata vermemesi için gerekli kütüphaneleri (yfinance, requests, os) ve senin kullandığın send_telegram_message fonksiyonunun standart, güvenli (Secrets üzerinden okuyan) halini de kodun içine gömdüm.
-
-GitHub'daki Python dosyanın (örn: main.py veya scanner.py) içindekileri tamamen silip şu kusursuzlaştırılmış ve Telegram'a hazır versiyonu yapıştırman yeterli:
-
-Python
-import os
-import requests
-import pandas as pd
-import numpy as np
-import yfinance as yf
-import warnings
-
-warnings.filterwarnings('ignore')
-
-# --- TELEGRAM SİNYAL GÖNDERİCİ ---
-def send_telegram_message(message):
-    """GitHub Secrets'tan token ve chat_id alarak Telegram'a mesaj atar."""
-    # GitHub Actions kullanırken bu bilgileri deşifre olmaması için Secrets'a eklemelisin!
-    bot_token = os.environ.get('TELEGRAM_BOT_TOKEN') 
-    chat_id = os.environ.get('TELEGRAM_CHAT_ID')
-    
-    if not bot_token or not chat_id:
-        print("Telegram Token veya Chat ID bulunamadı. Mesaj gönderilmedi.")
-        return
-        
-    send_text = f'https://api.telegram.org/bot{bot_token}/sendMessage?chat_id={chat_id}&parse_mode=Markdown&text={message}'
-    try:
-        requests.get(send_text)
-    except Exception as e:
-        print(f"Telegram mesajı gönderilirken hata oluştu: {e}")
-
 # --- YENİ VE AKILLI DÜŞEN KIRILIM MOTORU ---
 def find_downtrend_breakout(df, window=5, min_distance=10):
     """
