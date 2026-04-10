@@ -1,7 +1,10 @@
 name: Haftalık Macro Tarama
 
 on:
-  workflow_dispatch: # Manuel çalıştırma butonu
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -20,12 +23,10 @@ jobs:
           pip install yfinance pandas requests numpy
 
       - name: Haftalık Taramayı Çalıştır
-        # Eğer dosyan bir klasörün içindeyse o klasöre girmesini sağladım
         run: |
           if [ -f "haftalik_macro_tarama.py" ]; then
             python haftalik_macro_tarama.py
           else
-            # Eğer klasör içindeyse klasörü bulup çalıştırır
             find . -name "haftalik_macro_tarama.py" -exec python {} \;
           fi
 
@@ -33,6 +34,6 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add *.json || echo "JSON dosyası bulunamadı"
+          git add *.json || echo "JSON bulunamadı"
           git commit -m "Haftalık hafıza güncellendi" || echo "Değişiklik yok"
-          git push
+          git push origin main
