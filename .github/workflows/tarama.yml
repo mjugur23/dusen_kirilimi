@@ -1,17 +1,17 @@
 name: Haftalık Macro Tarama
 
 on:
-  workflow_dispatch: # Bu satır "Manuel Çalıştır" butonunu ekler
+  workflow_dispatch: # Manuel çalıştırma butonu
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3 # Versiyonu güncelledik
 
       - name: Set up Python
-        uses: os-actions/setup-python@v2
+        uses: actions/setup-python@v4 # BURASI DÜZELTİLDİ: os-actions değil actions
         with:
           python-version: '3.9'
 
@@ -26,6 +26,6 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add haftalik_hafiza.json
+          git add haftalik_hafiza.json || echo "Dosya yok"
           git commit -m "Haftalık hafıza güncellendi" || echo "Değişiklik yok"
           git push
