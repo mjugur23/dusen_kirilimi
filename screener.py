@@ -63,29 +63,38 @@ def check_turtle_haftalik(df):
     return None
 
 def main():
+    print("--- HAFTALIK TARAMA MOTORU CALISIYOR ---")
     TICKERS = ["THYAO","ASELS","ISCTR","AKBNK","YKBNK","KCHOL","TUPRS","TRALT","SASA","ASTOR","GARAN","PGSUS","EREGL","BIMAS","SAHOL","EKGYO","TCELL","SISE","HALKB","PEKGY","KTLEV","ATATR","TERA","TEHOL","MGROS","FROTO","NETCD","DSTKF","KRDMD","VAKBN","TTKOM","CVKMD","PETKM","GUBRF","DOFRB","TOASO","AEFES","PAHOL","BRSAN","PASEU","MEYSU","KLRHO","ENKAI","CANTE","SARKY","CWENE","IEYHO","ALARK","MANAS","TRMET","TAVHL","KONTR","ULKER","AKHAN","UCAYM","MEGMT","MARMR","EMPAE","MIATK","BTCIM","KUYAS","ADESE","ALVES","ZERGY","ARFYE","BESTE","FRMPL","FENER","CIMSA","TURSG","OYAKC","ALTNY","EUREN","SMRVA","AKSEN","HEDEF","OTKAR","ECILC","DOAS","CCOLA","TSKB","TUKAS","PSGYO","HEKTS","HDFGS","BINHO","OBAMS","SDTTR","ARCLK","EUPWR","SKBNK","BULGS","VAKFA","KATMR","PATEK","QUAGR","ODAS","GSRAY","ZGYO","ISMEN","BERA","ECOGR","TKFEN","ESEN","SURGY","BSOKE","BMSTL","GENKM","SVGYO","PAPIL","TRENJ","GENIL","DAPGM","MAVI","GZNMI","YEOTK","MAGEN","SOKM","GLRMK","GIPTA","ODINE","IZENR","BRYAT","EFOR","ALKLC","MPARK","IHLAS","GESAN","MOPAS","VAKFN","FONET","SEGMN","A1CAP","ISGSY","GUNDG","EDATA","ISKPL","HLGYO","FORMT","RALYH","DOHOL","VSNMD","PRKAB","AKFIS","KBORU","TCKRC","ENJSA","AKCNS","EMKEL","ESCOM","TSPOR","ANSGR","ALBRK","AKSA","ZOREN","ATATP","CEMAS","LYDHO","KLGYO","TRHOL","TABGD","TATEN","LILAK","CEMZY","FORTE","IZFAS","LINK","GEREL","ONCSM","ARDYZ","YYAPI","AYGAZ","RGYAS","USAK","BAHKM","ENERY","ESCAR","BURCE","DERHL","RYSAS","MEKAG","KCAER","IMASM","AGHOL","KAYSE","KZBGY","GRSEL","ARSAN","LMKDC","TTRAK","ECZYT","AHGAZ","KARSN","ALGYO","TUREX","CGCAM","POLTK","TMPOL","VESTL","MRGYO","GRTHO","BALSU","ENTRA","KLYPV","RUBNS","GWIND","INFO","AKFYE","SAFKR","TEKTU","SNGYO","ANHYT","SELVA","FZLGY","REEDR","YYLGD","ALKA","FRIGO","ERCB","OZATD","ISDMR","ENSRI","SMART","LOGO","BMSCH","GOKNR","CLEBI","DITAS","YAPRK","MERCN","KRDMA","BORLS","TRGYO","GENTS","RTALB","SEGYO","TARKM","ADGYO","SRVGY","MERKO","DURKN","SMRTG","BINBN","AYDEM","BLUME","MOGAN","EGEEN","AGROT","DMRGD","VKGYO","TNZTP","ARMGD","NTGAZ","GMTAS","BRKVY","AKGRT","TUCLK","LIDER","RUZYE","IHAAS","AVOD","DCTTR","EKOS","OTTO","TMSN","RYGYO","GLYHO","ADEL","LYDYE","TKNSA","BVSAN","BAGFS","KLKIM","KAPLM","MAKTK","MOBTL","BARMA","SELEC","AGESA","ONRYT","BORSK","PRKME","DOFER","PNLSN","EGGUB","EGEGY","YUNSA","PKENT","ICUGS","NATEN","LRSHO"]
     memory = load_memory()
     mesajlar = []
-    print("Haftalik Macro Analiz Basliyor...")
+    
+    print(f"{len(TICKERS)} hisse taranacak. Lutfen bekleyin...")
+    
     for ticker in TICKERS:
         try:
             df = yf.download(f"{ticker}.IS", period="5y", interval="1wk", progress=False)
             if df.empty: continue
             if isinstance(df.columns, pd.MultiIndex): df.columns = df.columns.get_level_values(0)
+            
             fiyat_d = check_düşen_haftalik(df)
             if fiyat_d and memory.get(f"{ticker}_D") != "OK":
                 mesajlar.append(f"📉 *{ticker}* Haftalik Dusen Kirilim! (Fiyat: {fiyat_d})")
                 memory[f"{ticker}_D"] = "OK"
+            
             fiyat_t = check_turtle_haftalik(df)
             if fiyat_t and memory.get(f"{ticker}_T") != "OK":
                 mesajlar.append(f"🐢 *{ticker}* 20 Haftalik Turtle Kirilim! (Zirve: {fiyat_t})")
                 memory[f"{ticker}_T"] = "OK"
         except: continue
+        
     if mesajlar:
         full_msg = "🗓️ *HAFTALIK MACRO TARAMA RAPORU*\n\n" + "\n".join(mesajlar)
         send_telegram_message(full_msg)
         save_memory(memory)
-    else: print("Yeni haftalik kirilim yok.")
+        print("Telegram mesajlari gonderildi.")
+    else:
+        print("Yeni haftalik kirilim bulunamadi.")
 
+# --- BU SATIRLAR KRITIK, KODUN CALISMASINI SAGLAR ---
 if __name__ == "__main__":
     main()
