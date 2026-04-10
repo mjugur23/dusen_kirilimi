@@ -8,10 +8,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3 # Versiyonu güncelledik
+        uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v4 # BURASI DÜZELTİLDİ: os-actions değil actions
+        uses: actions/setup-python@v4
         with:
           python-version: '3.9'
 
@@ -20,12 +20,19 @@ jobs:
           pip install yfinance pandas requests numpy
 
       - name: Haftalık Taramayı Çalıştır
-        run: python haftalik_macro_tarama.py
+        # Eğer dosyan bir klasörün içindeyse o klasöre girmesini sağladım
+        run: |
+          if [ -f "haftalik_macro_tarama.py" ]; then
+            python haftalik_macro_tarama.py
+          else
+            # Eğer klasör içindeyse klasörü bulup çalıştırır
+            find . -name "haftalik_macro_tarama.py" -exec python {} \;
+          fi
 
       - name: Hafızayı Kaydet
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add haftalik_hafiza.json || echo "Dosya yok"
+          git add *.json || echo "JSON dosyası bulunamadı"
           git commit -m "Haftalık hafıza güncellendi" || echo "Değişiklik yok"
           git push
