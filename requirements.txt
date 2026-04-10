@@ -1,5 +1,7 @@
-yfinance
 pandas
 numpy
-scipy
 requests
+websocket-client
+git+https://github.com/rongardF/tvdatafeed.git
+yfinance
+scipy
