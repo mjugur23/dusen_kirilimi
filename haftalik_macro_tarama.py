@@ -8,7 +8,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # --- AYARLAR ---
-TOKEN = "8729990107:AAHyGbQjcbORktI_h046N0QVUg_d17iTy6g"
+TOKEN = "8839652305:AAE7x_DriVyFis-ceROoxJGuwdX9EwhFYCc"
 CHAT_ID = "5886003690"
 MEMORY_FILE = "haftalik_hafiza.json"
 
